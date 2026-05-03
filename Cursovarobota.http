@@ -1,0 +1,6 @@
+@Основна_курсова_з_нуля_HostAddress = http://localhost:5248
+
+GET {{Основна_курсова_з_нуля_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
