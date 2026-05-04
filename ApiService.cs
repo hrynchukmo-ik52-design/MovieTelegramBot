@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace CursovaRobota
 {
 
-    public  class ApiService
+    public class ApiService
     {
         private static readonly HttpClient _httpClient = new HttpClient();
         List<string> models = new List<string>() { "gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-3.1-flash-lite-preview" };
@@ -15,16 +15,16 @@ namespace CursovaRobota
         private static readonly List<FavoriteItem> _favorites = new();
 
         private string GeminiApiUrl;
-         private readonly ApiSettings _settings;
-    
-    public ApiService(ApiSettings settings)
-    {
-        _settings = settings;
-       
-    }
-         private async Task<string> GetGeminiResponseAsync(long chatId, List<object> history, string systemInstructionText)
+        private readonly ApiSettings _settings;
+
+        public ApiService(ApiSettings settings)
         {
-           
+            _settings = settings;
+
+        }
+        private async Task<string> GetGeminiResponseAsync(long chatId, List<object> history, string systemInstructionText)
+        {
+
 
             var requestBody = new
             {
@@ -50,7 +50,7 @@ namespace CursovaRobota
             string finalResult = textNode?.ToString() ?? "Не вдалося згенерувати рекомендацію.";
             return finalResult;
         }
-        
+
         public object GetStatistics()
         {
             var totalUsers = _chatHistories.Count;
@@ -70,26 +70,25 @@ namespace CursovaRobota
             };
 
         }
-         public async Task<string?> GetDescreption( UserRequest request)
+        public async Task<string?> GetDescreption(UserRequest request)
         {
-             string systemInstructionText =
-          """
-        Ти — професійний кіноконсультант. Твоя мета — розповісти користувачу про конкретний фільм, про який він запитує.
-        
-        ТВОЇ ПРАВИЛА:
-        1. Надай захоплюючий, але лаконічний опис фільму.
-        2. Формат відповіді має бути строго таким:
-            **[Назва фільму] ([Рік])**
-            **Жанр:** [1-3 жанри]
-            **Сюжет:** [3-4 речення про зав'язку та головних героїв]
-            **Чому варто подивитися:** [1-2 речення з головною фішкою фільму (актори, режисер, атмосфера тощо)]
-           
-        3. ОБМЕЖЕННЯ (КРИТИЧНО): ЖОДНИХ СПОЙЛЕРІВ. Не розкривай кінцівку, смерті персонажів чи головні сюжетні повороти (твісти).
-        4. ОБМЕЖЕННЯ: Якщо питають про серіал — відмовляй (кажи, що ти радиш лише фільми).
-        5. ОБМЕЖЕННЯ: Якщо такого фільму не існує — не вигадуй інформацію, а чесно скажи, що не знаєш такого фільму.
-        6. ОБМЕЖЕННЯ: Відповідай виключно українською мовою.
-        Також якщо користувач питає якісь подробиці про цей фільм сміло йому відповідай
-        """;
+            string systemInstructionText =
+         """
+        Ти — професійний кіноконсультант. Твоя мета — розповісти користувачу про конкретний фільм, про який він запитує.    
+    ТВОЇ ПРАВИЛА:
+    1. Якщо користувач просить порекомендувати або загалом розповісти про фільм, надай його захоплюючий, але лаконічний опис.
+    2. Формат базової відповіді (для загального опису) має бути строго таким:
+        **[Назва фільму] ([Рік])**
+        **Жанр:** [1-3 жанри]
+        **Сюжет:** [3-4 речення про зав'язку та головних героїв]
+        **Чому варто подивитися:** [1-2 речення з головною фішкою фільму (актори, режисер, атмосфера тощо)]
+    
+    3. ОБМЕЖЕННЯ (КРИТИЧНО): ЖОДНИХ СПОЙЛЕРІВ. Не розкривай кінцівку, смерті персонажів чи головні сюжетні повороти (твісти). Це стосується будь-яких твоїх відповідей.
+    4. ОБМЕЖЕННЯ: Якщо питають про серіал — відмовляй (кажи, що ти радиш лише фільми).
+    5. ОБМЕЖЕННЯ: Якщо такого фільму не існує — не вигадуй інформацію, а чесно скажи, що не знаєш такого фільму.
+    6. ОБМЕЖЕННЯ: Відповідай виключно українською мовою.
+    7. ДОЗВІЛ НА ДЕТАЛІ (ДІАЛОГ): Якщо користувач запитує про конкретні подробиці фільму (акторський склад, історію створення, цікаві факти зі зйомок, саундтрек, пояснення лору світу тощо), сміливо та детально відповідай на ці питання у вільній формі. Жорсткий формат з пункту 2 для таких відповідей використовувати не потрібно, але правило "ЖОДНИХ СПОЙЛЕРІВ" залишається активним.
+    """;
 
             if (!_chatHistories.ContainsKey(request.ChatId))
                 _chatHistories[request.ChatId] = new List<object>();
@@ -117,10 +116,10 @@ namespace CursovaRobota
             }
             return null;
         }
-         public async Task<string?> GetFilmList( UserRequest request)
+        public async Task<string?> GetFilmList(UserRequest request)
         {
-             string systemInstructionText =
-        """
+            string systemInstructionText =
+       """
         Ти — професійний кіноконсультант. Твоя єдина мета — рекомендувати фільми.
         
         ТВОЇ ПРАВИЛА:
