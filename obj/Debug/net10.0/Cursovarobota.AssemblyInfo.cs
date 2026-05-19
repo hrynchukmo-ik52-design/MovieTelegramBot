@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CursovaRobota")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+88c8210a6fa56d7b0f11ff3d952e7ed489bd7c06")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f16bb24b64fa12a3873f89d244506fa84a65af8e")]
 [assembly: System.Reflection.AssemblyProductAttribute("CursovaRobota")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CursovaRobota")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

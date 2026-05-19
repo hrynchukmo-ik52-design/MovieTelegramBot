@@ -2,30 +2,30 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore; // Додано для бази даних
 
 namespace CursovaRobota
 {
-
     public class ApiService
     {
         private static readonly HttpClient _httpClient = new HttpClient();
         List<string> models = new List<string>() { "gemini-3.1-pro-preview", "gemini-3-flash-preview", "gemini-3.1-flash-lite-preview" };
 
-        private static readonly Dictionary<long, List<object>> _chatHistories = new();
         private static readonly List<FavoriteItem> _favorites = new();
 
         private string GeminiApiUrl;
         private readonly ApiSettings _settings;
+        private readonly AppDbContext _db; // Додано поле БД
 
-        public ApiService(ApiSettings settings)
+        // Оновлено конструктор
+        public ApiService(ApiSettings settings, AppDbContext db)
         {
             _settings = settings;
-
+            _db = db;
         }
+
         private async Task<string> GetGeminiResponseAsync(long chatId, List<object> history, string systemInstructionText)
         {
-
-
             var requestBody = new
             {
                 system_instruction = new
@@ -53,23 +53,28 @@ namespace CursovaRobota
 
         public object GetStatistics()
         {
-            var totalUsers = _chatHistories.Count;
+            // Отримуємо статистику прямо з бази даних
+            var totalUsers = _db.ChatMessages.Select(m => m.ChatId).Distinct().Count();
+            var totalMessages = _db.ChatMessages.Count();
             var totalFavorites = _favorites.Count;
 
-            var mostActiveUser = _chatHistories
-                .OrderByDescending(x => x.Value.Count)
+            var mostActiveUser = _db.ChatMessages
+                .GroupBy(m => m.ChatId)
+                .OrderByDescending(g => g.Count())
+                .Select(g => new { ChatId = g.Key, Count = g.Count() })
                 .FirstOrDefault();
+
             return new
             {
                 totalUsers = totalUsers,
                 totalFavorites = totalFavorites,
-                totalMessages = _chatHistories.Values.Sum(h => h.Count),
-                mostActiveChatId = mostActiveUser.Key,
-                mostActiveMessagesCount = mostActiveUser.Value?.Count ?? 0,
+                totalMessages = totalMessages,
+                mostActiveChatId = mostActiveUser?.ChatId ?? 0,
+                mostActiveMessagesCount = mostActiveUser?.Count ?? 0,
                 timestamp = DateTime.UtcNow
             };
-
         }
+
         public async Task<string?> GetDescreption(UserRequest request)
         {
             string systemInstructionText =
@@ -90,13 +95,19 @@ namespace CursovaRobota
     7. ДОЗВІЛ НА ДЕТАЛІ (ДІАЛОГ): Якщо користувач запитує про конкретні подробиці фільму (акторський склад, історію створення, цікаві факти зі зйомок, саундтрек, пояснення лору світу тощо), сміливо та детально відповідай на ці питання у вільній формі. Жорсткий формат з пункту 2 для таких відповідей використовувати не потрібно, але правило "ЖОДНИХ СПОЙЛЕРІВ" залишається активним.
     """;
 
-            if (!_chatHistories.ContainsKey(request.ChatId))
-                _chatHistories[request.ChatId] = new List<object>();
+            // 1. Зберігаємо повідомлення користувача в БД
+            _db.ChatMessages.Add(new ChatMessage { ChatId = request.ChatId, Role = "user", Text = request.UserMessage });
+            await _db.SaveChangesAsync();
 
-            var history = _chatHistories[request.ChatId];
-            history.Add(new { role = "user", parts = new[] { new { text = request.UserMessage } } });
+            // 2. Отримуємо останні 10 повідомлень для контексту
+            var dbHistory = _db.ChatMessages
+                .Where(m => m.ChatId == request.ChatId)
+                .OrderByDescending(m => m.CreatedAt)
+                .Take(10)
+                .OrderBy(m => m.CreatedAt)
+                .ToList();
 
-            if (history.Count > 10) history.RemoveRange(0, 2);
+            var history = dbHistory.Select(m => new { role = m.Role, parts = new[] { new { text = m.Text } } }).Cast<object>().ToList();
 
             string response;
             foreach (var m in models)
@@ -108,7 +119,9 @@ namespace CursovaRobota
 
                     response = await GetGeminiResponseAsync(request.ChatId, history, systemInstructionText);
 
-                    history.Add(new { role = "model", parts = new[] { new { text = response } } });
+                    // 3. Зберігаємо відповідь моделі в БД
+                    _db.ChatMessages.Add(new ChatMessage { ChatId = request.ChatId, Role = "model", Text = response });
+                    await _db.SaveChangesAsync();
 
                     return response;
                 }
@@ -116,6 +129,7 @@ namespace CursovaRobota
             }
             return null;
         }
+
         public async Task<string?> GetFilmList(UserRequest request)
         {
             string systemInstructionText =
@@ -134,13 +148,20 @@ namespace CursovaRobota
         4. ОБМЕЖЕННЯ: Якщо питають про серіали — відмовляй (ти радиш лише фільми).
         5. ОБМЕЖЕННЯ: Інші теми ігноруй (кажи, що ти тільки про кіно).
         """;
-            if (!_chatHistories.ContainsKey(request.ChatId))
-                _chatHistories[request.ChatId] = new List<object>();
 
-            var history = _chatHistories[request.ChatId];
-            history.Add(new { role = "user", parts = new[] { new { text = request.UserMessage } } });
+            // 1. Зберігаємо повідомлення користувача в БД
+            _db.ChatMessages.Add(new ChatMessage { ChatId = request.ChatId, Role = "user", Text = request.UserMessage });
+            await _db.SaveChangesAsync();
 
-            if (history.Count > 10) history.RemoveRange(0, 2);
+            // 2. Отримуємо останні 10 повідомлень для контексту
+            var dbHistory = _db.ChatMessages
+                .Where(m => m.ChatId == request.ChatId)
+                .OrderByDescending(m => m.CreatedAt)
+                .Take(10)
+                .OrderBy(m => m.CreatedAt)
+                .ToList();
+
+            var history = dbHistory.Select(m => new { role = m.Role, parts = new[] { new { text = m.Text } } }).Cast<object>().ToList();
 
             string response;
             foreach (var m in models)
@@ -152,7 +173,9 @@ namespace CursovaRobota
 
                     response = await GetGeminiResponseAsync(request.ChatId, history, systemInstructionText);
 
-                    history.Add(new { role = "model", parts = new[] { new { text = response } } });
+                    // 3. Зберігаємо відповідь моделі в БД
+                    _db.ChatMessages.Add(new ChatMessage { ChatId = request.ChatId, Role = "model", Text = response });
+                    await _db.SaveChangesAsync();
 
                     return response;
                 }
@@ -160,9 +183,5 @@ namespace CursovaRobota
             }
             return null;
         }
-
     }
-
-
-
 }
