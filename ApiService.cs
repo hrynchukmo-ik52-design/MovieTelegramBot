@@ -116,20 +116,29 @@ namespace CursovaRobota
             {
                 try
                 {
-                    Console.WriteLine(m);
+                    Console.WriteLine($"Пробую модель: {m}");
                     GeminiApiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={_settings.Gemini}";
 
                     response = await GetGeminiResponseAsync(request.ChatId, history, systemInstructionText);
 
-                    // 3. Зберігаємо відповідь моделі в БД
+                    // Якщо успішно - зберігаємо і виходимо
                     _db.ChatMessages.Add(new ChatMessage { ChatId = request.ChatId, Role = "model", Text = response });
                     await _db.SaveChangesAsync();
 
                     return response;
                 }
-                catch { }
-            }
-            return null;
+                catch (Exception ex)
+                {
+                    // ЦЕ ПОКАЖЕ НАМ, ЧОМУ ВОНО ПАДАЄ!
+                    Console.WriteLine($"[ПОМИЛКА МОДЕЛІ {m}]: {ex.Message}");
+                    if (ex.InnerException != null)
+                    {
+                        Console.WriteLine($"[ДЕТАЛІ]: {ex.InnerException.Message}");
+                    }
+                }
+            } // Ось ця дужка закриває foreach
+
+            return null; // Якщо дійшли сюди - всі моделі впали
         }
 
         public async Task<string?> GetFilmList(UserRequest request)
@@ -170,20 +179,29 @@ namespace CursovaRobota
             {
                 try
                 {
-                    Console.WriteLine(m);
+                    Console.WriteLine($"Пробую модель: {m}");
                     GeminiApiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={_settings.Gemini}";
 
                     response = await GetGeminiResponseAsync(request.ChatId, history, systemInstructionText);
 
-                    // 3. Зберігаємо відповідь моделі в БД
+                    // Якщо успішно - зберігаємо і виходимо
                     _db.ChatMessages.Add(new ChatMessage { ChatId = request.ChatId, Role = "model", Text = response });
                     await _db.SaveChangesAsync();
 
                     return response;
                 }
-                catch { }
-            }
-            return null;
+                catch (Exception ex)
+                {
+                    // ЦЕ ПОКАЖЕ НАМ, ЧОМУ ВОНО ПАДАЄ!
+                    Console.WriteLine($"[ПОМИЛКА МОДЕЛІ {m}]: {ex.Message}");
+                    if (ex.InnerException != null)
+                    {
+                        Console.WriteLine($"[ДЕТАЛІ]: {ex.InnerException.Message}");
+                    }
+                }
+            } // Ось ця дужка закриває foreach
+
+            return null; // Якщо дійшли сюди - всі моделі впали
         }
     }
 }
