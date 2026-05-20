@@ -9,7 +9,9 @@ namespace CursovaRobota
     public class ApiService
     {
         private static readonly HttpClient _httpClient = new HttpClient();
-        List<string> models = new List<string>() { "gemini-3.1-pro-preview", "gemini-3.5-flash", "gemini-flash-lite-latest" };
+        List<string> models = new List<string>() { "gemini-1.5-flash", 
+    "gemini-1.5-pro", 
+    "gemini-1.5-flash-8b"  };
 
         private static readonly List<FavoriteItem> _favorites = new();
 
