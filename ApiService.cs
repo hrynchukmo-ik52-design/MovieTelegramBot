@@ -9,9 +9,7 @@ namespace CursovaRobota
     public class ApiService
     {
         private static readonly HttpClient _httpClient = new HttpClient();
-        List<string> models = new List<string>() { "gemini-3-flash-preview", 
-    "gemini-3.1-flash-lite", 
-    "gemini-2.5-flash-lite"  };
+        List<string> models = new List<string>() { "gemini-3-flash-preview","gemini-3.1-flash-lite","gemini-2.5-flash-lite"};
 
         private static readonly List<FavoriteItem> _favorites = new();
 
@@ -116,29 +114,20 @@ namespace CursovaRobota
             {
                 try
                 {
-                    Console.WriteLine($"Пробую модель: {m}");
+                    Console.WriteLine(m);
                     GeminiApiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={_settings.Gemini}";
 
                     response = await GetGeminiResponseAsync(request.ChatId, history, systemInstructionText);
 
-                    // Якщо успішно - зберігаємо і виходимо
+                    // 3. Зберігаємо відповідь моделі в БД
                     _db.ChatMessages.Add(new ChatMessage { ChatId = request.ChatId, Role = "model", Text = response });
                     await _db.SaveChangesAsync();
 
                     return response;
                 }
-                catch (Exception ex)
-                {
-                    // ЦЕ ПОКАЖЕ НАМ, ЧОМУ ВОНО ПАДАЄ!
-                    Console.WriteLine($"[ПОМИЛКА МОДЕЛІ {m}]: {ex.Message}");
-                    if (ex.InnerException != null)
-                    {
-                        Console.WriteLine($"[ДЕТАЛІ]: {ex.InnerException.Message}");
-                    }
-                }
-            } // Ось ця дужка закриває foreach
-
-            return null; // Якщо дійшли сюди - всі моделі впали
+                catch { }
+            }
+            return null;
         }
 
         public async Task<string?> GetFilmList(UserRequest request)
@@ -175,33 +164,24 @@ namespace CursovaRobota
             var history = dbHistory.Select(m => new { role = m.Role, parts = new[] { new { text = m.Text } } }).Cast<object>().ToList();
 
             string response;
-            foreach (var m in models)
+           foreach (var m in models)
             {
                 try
                 {
-                    Console.WriteLine($"Пробую модель: {m}");
+                    Console.WriteLine(m);
                     GeminiApiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={_settings.Gemini}";
 
                     response = await GetGeminiResponseAsync(request.ChatId, history, systemInstructionText);
 
-                    // Якщо успішно - зберігаємо і виходимо
+                    // 3. Зберігаємо відповідь моделі в БД
                     _db.ChatMessages.Add(new ChatMessage { ChatId = request.ChatId, Role = "model", Text = response });
                     await _db.SaveChangesAsync();
 
                     return response;
                 }
-                catch (Exception ex)
-                {
-                    // ЦЕ ПОКАЖЕ НАМ, ЧОМУ ВОНО ПАДАЄ!
-                    Console.WriteLine($"[ПОМИЛКА МОДЕЛІ {m}]: {ex.Message}");
-                    if (ex.InnerException != null)
-                    {
-                        Console.WriteLine($"[ДЕТАЛІ]: {ex.InnerException.Message}");
-                    }
-                }
-            } // Ось ця дужка закриває foreach
-
-            return null; // Якщо дійшли сюди - всі моделі впали
+                catch { }
+            }
+            return null;
         }
     }
 }
