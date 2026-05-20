@@ -1,15 +1,15 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Program projects\\Cursova robota\\Cursovarobota.csproj": {}
+    "D:\\Program projects\\Cursova robota\\CursovaRobota.csproj": {}
   },
   "projects": {
-    "D:\\Program projects\\Cursova robota\\Cursovarobota.csproj": {
+    "D:\\Program projects\\Cursova robota\\CursovaRobota.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Program projects\\Cursova robota\\Cursovarobota.csproj",
-        "projectName": "Cursovarobota",
-        "projectPath": "D:\\Program projects\\Cursova robota\\Cursovarobota.csproj",
+        "projectUniqueName": "D:\\Program projects\\Cursova robota\\CursovaRobota.csproj",
+        "projectName": "CursovaRobota",
+        "projectPath": "D:\\Program projects\\Cursova robota\\CursovaRobota.csproj",
         "packagesPath": "C:\\Users\\Макс\\.nuget\\packages\\",
         "outputPath": "D:\\Program projects\\Cursova robota\\obj\\",
         "projectStyle": "PackageReference",
