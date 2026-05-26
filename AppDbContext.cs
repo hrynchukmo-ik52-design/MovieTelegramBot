@@ -9,5 +9,6 @@ namespace CursovaRobota
         }
 
         public DbSet<ChatMessage> ChatMessages { get; set; }
+         public DbSet<FavoriteItem> Favorites { get; set; } 
     }
 }

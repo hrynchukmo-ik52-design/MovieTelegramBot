@@ -11,7 +11,7 @@ namespace CursovaRobota
         private static readonly HttpClient _httpClient = new HttpClient();
         List<string> models = new List<string>() { "gemini-3-flash-preview","gemini-3.1-flash-lite","gemini-2.5-flash-lite"};
 
-        private static readonly List<FavoriteItem> _favorites = new();
+        
 
         private string GeminiApiUrl;
         private readonly ApiSettings _settings;
@@ -51,29 +51,7 @@ namespace CursovaRobota
             return finalResult;
         }
 
-        public object GetStatistics()
-        {
-            // Отримуємо статистику прямо з бази даних
-            var totalUsers = _db.ChatMessages.Select(m => m.ChatId).Distinct().Count();
-            var totalMessages = _db.ChatMessages.Count();
-            var totalFavorites = _favorites.Count;
-
-            var mostActiveUser = _db.ChatMessages
-                .GroupBy(m => m.ChatId)
-                .OrderByDescending(g => g.Count())
-                .Select(g => new { ChatId = g.Key, Count = g.Count() })
-                .FirstOrDefault();
-
-            return new
-            {
-                totalUsers = totalUsers,
-                totalFavorites = totalFavorites,
-                totalMessages = totalMessages,
-                mostActiveChatId = mostActiveUser?.ChatId ?? 0,
-                mostActiveMessagesCount = mostActiveUser?.Count ?? 0,
-                timestamp = DateTime.UtcNow
-            };
-        }
+       
 
         public async Task<string?> GetDescreption(UserRequest request)
         {

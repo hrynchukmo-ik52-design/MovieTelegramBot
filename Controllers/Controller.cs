@@ -7,60 +7,72 @@ using Microsoft.Extensions.Options;
 using CursovaRobota;
 using Microsoft.OpenApi;
 using Microsoft.VisualBasic;
+using System.Linq; // Додано для роботи з базою даних
 
 [ApiController]
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
-    ApiService apiService ;
-    public UsersController(ApiService apiService)
+    ApiService apiService;
+    AppDbContext _db; // Додано підключення до бази
+
+    // Оновлено конструктор
+    public UsersController(ApiService apiService, AppDbContext db)
     {
        this.apiService = apiService;
+       _db = db;
     }
 
-   private static readonly List<FavoriteItem> _favorites = new();
+    // Видалено статичний список _favorites
+
     [HttpPost("add-favorite")]
     public IActionResult AddFavorite([FromBody] FavoriteItem item)
     {
         if (string.IsNullOrEmpty(item.MovieTitle)) return BadRequest();
-        if (!_favorites.Any(f => f.ChatId == item.ChatId && f.MovieTitle == item.MovieTitle))
-            _favorites.Add(item);
+        
+        // Перевіряємо в базі даних
+        if (!_db.Favorites.Any(f => f.ChatId == item.ChatId && f.MovieTitle == item.MovieTitle))
+        {
+            _db.Favorites.Add(item);
+            _db.SaveChanges(); // Зберігаємо в БД
+        }
         return Ok(new { status = "success" });
     }
 
-    
     [HttpGet("favorites/{chatId}")]
     public IActionResult GetFavorites(long chatId)
     {
-        var list = _favorites.Where(f => f.ChatId == chatId).ToList();
+        // Читаємо з бази даних
+        var list = _db.Favorites.Where(f => f.ChatId == chatId).ToList();
         return Ok(new { favorites = list });
     }
 
-    
     [HttpDelete("favorites/{chatId}/{movieTitle}")]
     public IActionResult DeleteFavorite(long chatId, string movieTitle)
     {
-        _favorites.RemoveAll(f => f.ChatId == chatId && f.MovieTitle == movieTitle);
+        // Шукаємо і видаляємо з бази даних
+        var itemsToDelete = _db.Favorites.Where(f => f.ChatId == chatId && f.MovieTitle == movieTitle).ToList();
+        if (itemsToDelete.Any())
+        {
+            _db.Favorites.RemoveRange(itemsToDelete);
+            _db.SaveChanges(); // Зберігаємо в БД
+        }
         return Ok(new { status = "success" });
     }
-
 
     [HttpPut("favorites/update")]
     public IActionResult UpdateFavorite([FromBody] FavoriteItem updateRequest)
     {
-        var item = _favorites.FirstOrDefault(f => f.ChatId == updateRequest.ChatId && f.MovieTitle == updateRequest.MovieTitle);
+        // Шукаємо в базі даних
+        var item = _db.Favorites.FirstOrDefault(f => f.ChatId == updateRequest.ChatId && f.MovieTitle == updateRequest.MovieTitle);
         if (item != null)
         {
             item.Note = updateRequest.Note;
+            _db.SaveChanges(); // Зберігаємо в БД
             return Ok(new { status = "success" });
         }
         return NotFound();
     }
 
-   [HttpGet("stats")]
-public IActionResult GetStatistics()
-{
-   return Ok(apiService.GetStatistics());
-}
-
+    
 }
